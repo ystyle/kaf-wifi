@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>KAF-wifi</title>
+    <style>
+        table {
+            width: 90%;
+            margin: 10px auto;
+            border-collapse: collapse;
+            border-top: 1px solid lightgray;
+            border-left: 1px solid lightgray;
+            border-right: 1px solid lightgray;
+        }
+
+        tr {
+            border-bottom: 1px solid lightgray;
+            display: flex;
+            font-size: 1.3rem;
+            line-height: 2rem;
+        }
+
+        th, td {
+            flex: 1;
+            text-align: right;
+        }
+
+        .name {
+            flex: 5;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            word-wrap: break-word;
+            text-align: left;
+        }
+        a {
+            text-decoration: none;
+        }
+        .upload {
+            width: 90%;
+            margin: 10px auto;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+    <tr>
+        <th class="name">名称</th>
+        <th>大小</th>
+    </tr>
+    </thead>
+    <tbody>
+    <div class="upload">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            选择文件: <input type="file" name="file">
+            <input type="submit" value="上传">
+        </form>
+    </div>
+
+    {{ range $index, $item := . }}
+        <tr>
+            <td class="name">
+                <a href="/static/{{$item.Path}}">
+                    {{$item.Name}}
+                </a>
+            </td>
+            <td>{{$item.Size}}</td>
+        </tr>
+    {{end}}
+    </tbody>
+</table>
+</body>
+</html>
