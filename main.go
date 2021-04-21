@@ -4,14 +4,14 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/getlantern/systray"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"html/template"
+	"github.com/labstack/gommon/log"
 	"io"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -21,17 +21,21 @@ import (
 //go:embed public
 var public embed.FS
 
-var exts = map[string]bool{
-	".mobi": true,
-	".epub": true,
-	".text": true,
-	".azw3": true,
-	".pdf":  true,
-	".azw":  true,
-	".txt":  true,
-	".doc":  true,
-	".docx": true,
-}
+var (
+	exts = map[string]bool{
+		".mobi": true,
+		".epub": true,
+		".text": true,
+		".azw3": true,
+		".pdf":  true,
+		".azw":  true,
+		".txt":  true,
+		".doc":  true,
+		".docx": true,
+	}
+	port   = 1614
+	ipList string
+)
 
 type FileItem struct {
 	Name string
@@ -39,54 +43,44 @@ type FileItem struct {
 	Size string
 }
 
-type Template struct {
-	templates *template.Template
-}
-
-func NewTemplate() *Template {
-	tt, err := template.ParseFS(public, "public/*.gohtml")
-	if err != nil {
-		panic(err)
-	}
-	return &Template{templates: tt}
-}
-
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, fmt.Sprintf("%s.gohtml", name), data)
-}
-
-func main() {
+func printIP() {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println("访问地址: ")
+	var ips []string
 	for _, address := range addrs {
 		// 检查ip地址判断是否回环地址
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				fmt.Println(fmt.Sprintf("http://%s:1614", ipnet.IP.String()))
+				ip := fmt.Sprintf("http://%s:%d", ipnet.IP.String(), port)
+				fmt.Println(ip)
+				ips = append(ips, ip)
 			}
 		}
 	}
+	ipList = strings.Join(ips, "\n")
+}
+
+func main() {
+	printIP()
 
 	// Echo instance
 	e := echo.New()
+	e.Logger.SetLevel(log.OFF)
 	e.Renderer = NewTemplate()
 
 	// Middleware
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	pwd, _ := os.Getwd()
 	if len(os.Args) == 2 {
 		pwd = os.Args[1]
 	}
-	//e.GET("/static/*", func(c echo.Context) error {
-	//	c.Attachment()
-	//})
 	e.Static("/static", pwd)
+	// 扫描目录下面的所有书籍文件
 	var fileList []FileItem
 	filepath.Walk(pwd, func(filepath string, info os.FileInfo, err error) error {
 		if !info.IsDir() && exts[path.Ext(filepath)] {
@@ -102,26 +96,31 @@ func main() {
 		}
 		return nil
 	})
+	// 添加处理mobi, azw3文件识别处理插件
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if strings.HasPrefix(c.Request().URL.Path, "/static/") {
-				c.Response().Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", path.Base(c.Request().URL.Path)))
+				// 转换中文在前端显示
+				contentDisposition := fmt.Sprintf(`attachment; filename="%s"`, path.Base(c.Request().URL.Path))
+				c.Response().Header().Add("Content-Disposition", contentDisposition)
+				// 识别文件类型
 				m, err := mimetype.DetectFile(path.Join(pwd, strings.ReplaceAll(c.Request().URL.Path, "/static", "")))
 				if err != nil {
 					return err
 				}
-				fmt.Println(m.String(), m.Extension(), path.Base(c.Request().URL.Path))
+				// 添加内容类型 mimetype， 以让kindle浏览器识别mobi, azw3文件
 				c.Response().Header().Set("content-type", m.String())
 			}
 			return next(c)
 		}
 	})
 
-	// Routes
+	// 访问页面
 	e.GET("/", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "index", fileList)
 	})
 
+	// 上传文件，由于kindle不支持上传，前端禁用了本功能
 	e.POST("/upload", func(c echo.Context) error {
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -150,26 +149,11 @@ func main() {
 		return c.Redirect(http.StatusFound, base)
 	})
 
+	// 在windows时自动打开浏览器
 	if runtime.GOOS == "windows" {
-		dir := path.Dir(os.Args[0])
-		Run(dir, "cmd", "/c", "start", "http://localhost:1614/")
+		openUI()
+		go systray.Run(onReady, onExit)
 	}
 	// Start server
-	e.Logger.Fatal(e.Start(":1614"))
-}
-
-func FormatBytesLength(length int64) string {
-	if length < 1024*1024 {
-		return fmt.Sprintf("%d K", length/(1024))
-	} else {
-		return fmt.Sprintf("%d M", length/(1024*1024))
-	}
-}
-
-func Run(dir, command string, args ...string) error {
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
 }
