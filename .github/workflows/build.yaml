@@ -23,7 +23,7 @@ jobs:
       - name: Build
         run: |
           GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi.exe
-          GOOS=windows GOARCH=386 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi_32.xe
+          GOOS=windows GOARCH=386 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi_32.exe
           GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi-linux
           GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi-darwin
 
