@@ -3,6 +3,7 @@ module kaf-wifi
 go 1.16
 
 require (
+	github.com/cratonica/2goarray v0.0.0-20190331194516-514510793eaa // indirect
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/getlantern/systray v1.1.0
 	github.com/labstack/echo/v4 v4.2.2

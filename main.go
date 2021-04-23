@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/getlantern/systray"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -38,7 +37,7 @@ var (
 	analyze = true
 )
 
-const version = "v1.0.1"
+const version = "v1.0.3"
 
 type FileItem struct {
 	Name string
@@ -159,11 +158,15 @@ func main() {
 	// 在windows时自动打开浏览器
 	if runtime.GOOS == "windows" {
 		openUI()
-		go systray.Run(onReady, onExit)
 	}
 	if analyze {
 		go analytics()
 	}
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
+}
+
+func openUI() {
+	dir := path.Dir(os.Args[0])
+	Run(dir, "cmd", "/c", "start", fmt.Sprintf("http://localhost:%d/", port))
 }

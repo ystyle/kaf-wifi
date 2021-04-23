@@ -50,6 +50,9 @@
             width: 90%;
             margin: 10px auto;
         }
+        .iplist-container a {
+            font-size: 1.5rem;
+        }
         .iplist {
             display: none;
         }
@@ -63,7 +66,9 @@
 </head>
 <body>
 <div class="iplist-container">
-    <span onclick="toogleDisplay()">▼查看其它访问地址(当前kaf-wifi版本: {{ .version }})</span>
+    <span onclick="toogleDisplay()">
+        ▼查看其它访问地址(当前<a href="https://ystyle.top/2019/12/31/txt-converto-epub-and-mobi/" target="_blank"> kaf-wifi </a>版本: {{ .version }})
+    </span>
     <div class="iplist">
         {{ range $index, $item := .ipList }}
             <li>{{$item}}</li>
