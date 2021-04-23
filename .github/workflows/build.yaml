@@ -1,0 +1,55 @@
+name: Go
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi.exe
+          GOOS=windows GOARCH=386 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi_32.xe
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi-linux
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}" -o kaf-wifi-darwin
+
+      - name: compression zip
+        run: |
+          zip kaf-wifi-windows.zip kaf-wifi.exe kaf-wifi_32.exe
+          zip kaf-wifi-darwin.zip kaf-wifi-darwin
+          zip kaf-wifi-linux.zip kaf-wifi-linux
+
+      - name: Upload windows to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: kaf-wifi-windows.zip application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload linux to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: kaf-wifi-linux.zip application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload mac to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: kaf-wifi-darwin.zip application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
