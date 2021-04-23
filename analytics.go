@@ -23,7 +23,6 @@ func analytics() {
 	query := url.Values{}
 	query.Add("api_secret", secret)
 	query.Add("measurement_id", measurement)
-	fmt.Println(query.Encode())
 	uri := fmt.Sprintf("https://www.google-analytics.com/mp/collect?%s", query.Encode())
 	t := time.Now().Unix()
 	params := map[string]interface{}{
