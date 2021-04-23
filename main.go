@@ -33,9 +33,12 @@ var (
 		".doc":  true,
 		".docx": true,
 	}
-	port   = 1614
-	ipList string
+	port    = 1614
+	ipList  []string
+	analyze = true
 )
+
+const version = "v1.0.1"
 
 type FileItem struct {
 	Name string
@@ -43,30 +46,27 @@ type FileItem struct {
 	Size string
 }
 
-func printIP() {
+func initIpList() {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println("访问地址: ")
-	var ips []string
 	for _, address := range addrs {
 		// 检查ip地址判断是否回环地址
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				ip := fmt.Sprintf("http://%s:%d", ipnet.IP.String(), port)
 				fmt.Println(ip)
-				ips = append(ips, ip)
+				ipList = append(ipList, ip)
 			}
 		}
 	}
-	ipList = strings.Join(ips, "\n")
 }
 
 func main() {
-	printIP()
-
+	initIpList()
 	// Echo instance
 	e := echo.New()
 	e.Logger.SetLevel(log.OFF)
@@ -76,8 +76,11 @@ func main() {
 	e.Use(middleware.Recover())
 
 	pwd, _ := os.Getwd()
-	if len(os.Args) == 2 {
+	if len(os.Args) >= 2 {
 		pwd = os.Args[1]
+	}
+	if len(os.Args) == 3 && os.Args[2] == "-noanalyze" {
+		analyze = false
 	}
 	e.Static("/static", pwd)
 	// 扫描目录下面的所有书籍文件
@@ -117,7 +120,11 @@ func main() {
 
 	// 访问页面
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "index", fileList)
+		return c.Render(http.StatusOK, "index", map[string]interface{}{
+			"version":  version,
+			"fileList": fileList,
+			"ipList":   ipList,
+		})
 	})
 
 	// 上传文件，由于kindle不支持上传，前端禁用了本功能
@@ -153,6 +160,9 @@ func main() {
 	if runtime.GOOS == "windows" {
 		openUI()
 		go systray.Run(onReady, onExit)
+	}
+	if analyze {
+		go analytics()
 	}
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))

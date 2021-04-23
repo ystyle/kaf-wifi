@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>KAF-wifi</title>
+    <title>KAF-wifi - {{ .version }}</title>
     <style>
         table {
             width: 90%;
@@ -46,9 +46,36 @@
             margin: 10px auto;
             display: none;
         }
+        .iplist-container {
+            width: 90%;
+            margin: 10px auto;
+        }
+        .iplist {
+            display: none;
+        }
     </style>
+    <script>
+        function toogleDisplay() {
+            var node = document.querySelector('.iplist')
+            node.style.display = node.style.display === 'block' ? 'none' : 'block'
+        }
+    </script>
 </head>
 <body>
+<div class="iplist-container">
+    <span onclick="toogleDisplay()">▼查看其它访问地址(当前kaf-wifi版本: {{ .version }})</span>
+    <div class="iplist">
+        {{ range $index, $item := .ipList }}
+            <li>{{$item}}</li>
+        {{end}}
+    </div>
+</div>
+<div class="upload">
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        选择文件: <input type="file" name="file">
+        <input type="submit" value="上传">
+    </form>
+</div>
 <table>
     <thead>
     <tr>
@@ -57,14 +84,7 @@
     </tr>
     </thead>
     <tbody>
-    <div class="upload">
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            选择文件: <input type="file" name="file">
-            <input type="submit" value="上传">
-        </form>
-    </div>
-
-    {{ range $index, $item := . }}
+    {{ range $index, $item := .fileList }}
         <tr>
             <td class="name">
                 <a href="/static/{{$item.Path}}">
