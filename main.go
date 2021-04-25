@@ -160,7 +160,7 @@ func main() {
 		openUI()
 	}
 	if analyze {
-		go analytics()
+		go Analytics()
 	}
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
