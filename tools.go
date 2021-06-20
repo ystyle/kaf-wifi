@@ -1,4 +1,4 @@
-package main
+package kafwifi
 
 import (
 	"fmt"
@@ -7,15 +7,15 @@ import (
 	"os"
 )
 
-func FormatBytesLength(length int64) string {
+func formatBytesLength(length int64) string {
 	if length < 1024*1024 {
-		return fmt.Sprintf("%d K", length/(1024))
+		return fmt.Sprintf("%.2f K", float32(length)/(1024))
 	} else {
-		return fmt.Sprintf("%d M", length/(1024*1024))
+		return fmt.Sprintf("%.2f M", float32(length)/(1024*1024))
 	}
 }
 
-func IsExists(path string) (bool, error) {
+func isExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -26,14 +26,14 @@ func IsExists(path string) (bool, error) {
 	return false, err
 }
 
-func GetClientID() string {
+func getClientID() string {
 	clientID := uuid.NewV4().String()
 	config, err := os.UserConfigDir()
 	if err != nil {
 		return clientID
 	}
 	filepath := fmt.Sprintf("%s/kaf-wifi/config", config)
-	if exist, _ := IsExists(filepath); exist {
+	if exist, _ := isExists(filepath); exist {
 		bs, err := ioutil.ReadFile(filepath)
 		if err != nil {
 			return clientID

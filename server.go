@@ -1,4 +1,4 @@
-package main
+package kafwifi
 
 import (
 	"embed"
@@ -32,12 +32,11 @@ var (
 		".doc":  true,
 		".docx": true,
 	}
-	port    = 1614
-	ipList  []string
-	analyze = true
+	port   = 1614
+	ipList []string
 )
 
-const version = "v1.0.3"
+const version = "v1.0.4"
 
 type FileItem struct {
 	Name string
@@ -64,12 +63,12 @@ func initIpList() {
 	}
 }
 
-func main() {
+func Start() {
 	initIpList()
 	// Echo instance
 	e := echo.New()
 	e.Logger.SetLevel(log.OFF)
-	e.Renderer = NewTemplate()
+	e.Renderer = newTemplate()
 
 	// Middleware
 	e.Use(middleware.Recover())
@@ -78,26 +77,8 @@ func main() {
 	if len(os.Args) >= 2 {
 		pwd = os.Args[1]
 	}
-	if len(os.Args) == 3 && os.Args[2] == "-noanalyze" {
-		analyze = false
-	}
 	e.Static("/static", pwd)
-	// 扫描目录下面的所有书籍文件
-	var fileList []FileItem
-	filepath.Walk(pwd, func(filepath string, info os.FileInfo, err error) error {
-		if !info.IsDir() && exts[path.Ext(filepath)] {
-			item := FileItem{
-				Name: info.Name(),
-				Path: strings.ReplaceAll(filepath, pwd, ""),
-				Size: FormatBytesLength(info.Size()),
-			}
-			if runtime.GOOS == "windows" {
-				item.Path = strings.ReplaceAll(item.Path, "\\", "/")
-			}
-			fileList = append(fileList, item)
-		}
-		return nil
-	})
+
 	// 添加处理mobi, azw3文件识别处理插件
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -119,11 +100,34 @@ func main() {
 
 	// 访问页面
 	e.GET("/", func(c echo.Context) error {
+		// 扫描目录下面的所有书籍文件
+		var fileList []FileItem
+		filepath.Walk(pwd, func(filepath string, info os.FileInfo, err error) error {
+			if !info.IsDir() && exts[path.Ext(filepath)] {
+				item := FileItem{
+					Name: info.Name(),
+					Path: strings.ReplaceAll(filepath, pwd, ""),
+					Size: formatBytesLength(info.Size()),
+				}
+				if runtime.GOOS == "windows" {
+					item.Path = strings.ReplaceAll(item.Path, "\\", "/")
+				}
+				fileList = append(fileList, item)
+			}
+			return nil
+		})
 		return c.Render(http.StatusOK, "index", map[string]interface{}{
 			"version":  version,
 			"fileList": fileList,
 			"ipList":   ipList,
 		})
+	})
+	e.GET("/favicon.png", func(c echo.Context) error {
+		bs, err := public.ReadFile("public/favicon.png")
+		if err != nil {
+			return err
+		}
+		return c.Blob(http.StatusOK, "image/png", bs)
 	})
 
 	// 上传文件，由于kindle不支持上传，前端禁用了本功能
@@ -159,14 +163,11 @@ func main() {
 	if runtime.GOOS == "windows" {
 		openUI()
 	}
-	if analyze {
-		go Analytics()
-	}
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
 }
 
 func openUI() {
 	dir := path.Dir(os.Args[0])
-	Run(dir, "cmd", "/c", "start", fmt.Sprintf("http://localhost:%d/", port))
+	run(dir, "cmd", "/c", "start", fmt.Sprintf("http://localhost:%d/", port))
 }

@@ -1,4 +1,4 @@
-package main
+package kafwifi
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type Template struct {
 	templates *template.Template
 }
 
-func NewTemplate() *Template {
+func newTemplate() *Template {
 	tt, err := template.ParseFS(public, "public/*.gohtml")
 	if err != nil {
 		panic(err)
