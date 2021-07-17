@@ -8,7 +8,6 @@
 
 ### 其它安装方法
 - Archlinux 可以在aur上安装 [`yay -S kaf-cli kaf-wifi`](https://aur.archlinux.org/packages/kaf-cli/)
-- Windows 可以在`chocolatey`上安装`choco install kaf-cli kaf-wifi`
 
 ![](figures/goland64_2021-04-23_22-53-37.png)
 
