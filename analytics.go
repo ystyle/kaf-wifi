@@ -9,6 +9,9 @@ import (
 )
 
 func Analytics(secret, measurement string) {
+	if secret == "" || measurement == "" {
+		return
+	}
 	t := time.Now().Unix()
 	analytics.SetKeys(secret, measurement) // // required
 	payload := analytics.Payload{

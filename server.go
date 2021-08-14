@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -85,7 +86,7 @@ func Start() {
 			if strings.HasPrefix(c.Request().URL.Path, "/static/") {
 				// 转换中文在前端显示
 				contentDisposition := fmt.Sprintf(`attachment; filename="%s"`, path.Base(c.Request().URL.Path))
-				c.Response().Header().Add("Content-Disposition", contentDisposition)
+				c.Response().Header().Add("Content-Disposition", url.PathEscape(contentDisposition))
 				// 识别文件类型
 				m, err := mimetype.DetectFile(path.Join(pwd, strings.ReplaceAll(c.Request().URL.Path, "/static", "")))
 				if err != nil {
