@@ -37,7 +37,7 @@ var (
 	ipList []string
 )
 
-const version = "v1.0.4"
+var version string
 
 type FileItem struct {
 	Name string
@@ -65,6 +65,7 @@ func initIpList() {
 }
 
 func Start() {
+	fmt.Println("kaf-wifi: ", version)
 	initIpList()
 	// Echo instance
 	e := echo.New()

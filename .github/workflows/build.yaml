@@ -22,7 +22,9 @@ jobs:
 
       - name: Build
         run: |
-          flags="-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }}"
+          hash=`git rev-list --tags --max-count=1`
+          version=`git describe --tags $hash`
+          flags="-s -w -X main.secret=${{ secrets.API_SECRET }} -X main.measurement=${{ secrets.MEASUREMENT }} -X kaf-wifi.version=$version"
           GOOS=windows GOARCH=amd64 go build -ldflags "$flags" -o build/windows-amd64/kaf-wifi.exe cmd/main.go
           GOOS=windows GOARCH=386 go build -ldflags "$flags" -o build/windows-386/kaf-wifi.exe cmd/main.go
           GOOS=linux GOARCH=amd64 go build -ldflags "$flags" -o build/linux-amd64/kaf-wifi cmd/main.go
