@@ -38,9 +38,12 @@ jobs:
           zip -j kaf-wifi_${version}_windows_386.zip build/windows-386/kaf-wifi.exe
           zip -j kaf-wifi_${version}_linux_amd64.zip build/linux-amd64/kaf-wifi
           zip -j kaf-wifi_${version}_linux_arm64.zip build/linux-arm64/kaf-wifi
-          zip -j kaf-wifi_${version}_darwin_amd64.zip build/darwin-arm64/kaf-wifi
+          zip -j kaf-wifi_${version}_darwin_amd64.zip build/darwin-amd64/kaf-wifi
           zip -j kaf-wifi_${version}_darwin_arm64.zip build/darwin-arm64/kaf-wifi
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload release binaries
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
-          path: kaf-wifi_*.zip
+          asset_paths: '["./kaf-wifi_*.zip"]'
